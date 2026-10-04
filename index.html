@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logopédia hrou</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  text-align:center;
+  background:linear-gradient(#dff5ff,#fff7d8);
+  color:#17324d;
+}
+main{max-width:700px;margin:auto;padding:20px}
+.card{
+  background:white;
+  border-radius:25px;
+  padding:20px;
+  box-shadow:0 8px 25px #0002;
+}
+.options{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.option{
+  border:3px solid #b9e5ff;
+  border-radius:20px;
+  padding:12px;
+  background:#f9fdff;
+}
+.boats{
+  font-size:64px;
+  min-height:100px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.label{font-size:20px;font-weight:bold}
+button{
+  margin:8px;
+  border:0;
+  border-radius:16px;
+  padding:13px;
+  font-size:16px;
+  font-weight:bold;
+}
+.speaker{background:#ffdd58}
+.mic{background:#4dcf8b;color:white}
+.next{background:#5aa9ff;color:white}
+#status{min-height:45px;font-weight:bold}
+.good{color:green}
+.bad{color:#c33}
+</style>
+</head>
+
+<body>
+<main>
+
+<h1>🚢 Logopédia hrou</h1>
+<p>Počúvaj, ukáž a povedz správne.</p>
+
+<div class="card">
+
+<h2>Kde sú <span id="question">dve loďky</span>?</h2>
+
+<div class="options">
+
+<div class="option" onclick="answer(1)">
+  <div class="boats">⛵</div>
+  <div class="label">jedna loďka</div>
+  <button class="speaker"
+  onclick="event.stopPropagation();speak('jedna loďka')">
+  🔊 Počúvaj
+  </button>
+</div>
+
+<div class="option" onclick="answer(2)">
+  <div class="boats">⛵ ⛵</div>
+  <div class="label">dve loďky</div>
+  <button class="speaker"
+  onclick="event.stopPropagation();speak('dve loďky')">
+  🔊 Počúvaj
+  </button>
+</div>
+
+</div>
+
+<button class="speaker" onclick="speakQuestion()">🔊 Zadanie</button>
+<button class="mic" onclick="listen()">🎤 Povedz to</button>
+<button class="next" onclick="nextQuestion()">Ďalej ➜</button>
+
+<div id="status">⭐ 0 — vyber správny obrázok.</div>
+
+</div>
+</main>
+
+<script>
+let correct=2;
+let score=0;
+
+function speak(text){
+  speechSynthesis.cancel();
+  let voice=new SpeechSynthesisUtterance(text);
+  voice.lang="sk-SK";
+  voice.rate=0.82;
+  speechSynthesis.speak(voice);
+}
+
+function speakQuestion(){
+  speak(correct===1 ? "Kde je jedna loďka?" : "Kde sú dve loďky?");
+}
+
+function answer(number){
+  let status=document.getElementById("status");
+
+  if(number===correct){
+    score++;
+    status.className="good";
+    status.innerHTML="⭐ "+score+" — Výborne! 👏";
+    speak(correct===1 ? "jedna loďka" : "dve loďky");
+  }else{
+    status.className="bad";
+    status.innerHTML="Skús ešte raz 🙂";
+    speak("Skús ešte raz");
+  }
+}
+
+function nextQuestion(){
+  correct=correct===1 ? 2 : 1;
+
+  document.getElementById("question").innerHTML=
+  correct===1 ? "jedna loďka" : "dve loďky";
+
+  let status=document.getElementById("status");
+  status.className="";
+  status.innerHTML="⭐ "+score+" — vyber správny obrázok.";
+
+  speakQuestion();
+}
+
+function listen(){
+  const Recognition=
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  let status=document.getElementById("status");
+
+  if(!Recognition){
+    status.innerHTML="Rozpoznávanie hlasu tu nie je dostupné.";
+    return;
+  }
+
+  let recognition=new Recognition();
+  recognition.lang="sk-SK";
+
+  status.innerHTML="🎤 Počúvam...";
+
+  recognition.onresult=function(event){
+    let text=event.results[0][0].transcript.toLowerCase();
+
+    let good =
+      correct===1
+      ? text.includes("jedna") || text.includes("loďka")
+      : text.includes("dve") || text.includes("loďky");
+
+    if(good){
+      score++;
+      status.className="good";
+      status.innerHTML="⭐ "+score+
+      " — Výborne! Počul som: „"+text+"“ 👏";
+
+      speak(correct===1 ? "jedna loďka" : "dve loďky");
+    }else{
+      status.className="bad";
+      status.innerHTML="Počul som: „"+text+"“. Skús znova.";
+    }
+  };
+
+  recognition.start();
+}
+</script>
+
+</body>
+</html>
