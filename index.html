@@ -4,58 +4,211 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Detská logopédia</title>
-
 <style>
-body{
- margin:0;
- font-family:Arial,sans-serif;
- background:linear-gradient(#dff7ff,#fff4cf);
- text-align:center;
- color:#25324a;
-}
-.screen{
- min-height:100vh;
- display:none;
- align-items:center;
- justify-content:center;
- padding:20px;
- box-sizing:border-box;
-}
-.active{display:flex}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(#dff7ff,#fff2c9);text-align:center;color:#26334a}
+.page{display:none;min-height:100vh;padding:20px;align-items:center;justify-content:center}
+.show{display:flex}
+.card{background:white;width:100%;max-width:600px;padding:25px 15px;border-radius:30px;box-shadow:0 10px 30px #0002}
+h1{font-size:42px;color:#7358df;margin:10px}
+.hero{font-size:55px;margin:15px 0}
+button{border:0;border-radius:18px;padding:16px 20px;margin:7px;font-size:19px;font-weight:bold;color:white;background:#7358df}
+.green{background:#16a596}
+.red{background:#f45d78}
+.pics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0}
+.pic{background:#effaff;border-radius:22px;padding:20px 5px}
+.emoji{font-size:55px;min-height:70px}
+.word{font-size:24px;font-weight:bold}
+.top{display:flex;justify-content:space-between;font-weight:bold}
+#msg{font-size:21px;font-weight:bold;min-height:35px;margin-top:15px}
+</style>
+</head>
 
-.card{
- background:white;
- width:100%;
- max-width:600px;
- border-radius:30px;
- padding:25px;
- box-shadow:0 10px 30px #0002;
+<body>
+
+<div id="home" class="page show">
+<div class="card">
+<div class="hero">🌈 🐦 ⛵ ⚽ 🐶 🐱</div>
+<h1>Detská logopédia</h1>
+<h2>Učíme sa rozprávať hrou</h2>
+<p>Počúvaj, rozprávaj a zbieraj hviezdičky ⭐</p>
+<button onclick="start()">▶ Začať cvičiť</button>
+</div>
+</div>
+
+<div id="game" class="page">
+<div class="card">
+<div class="top">
+<span id="number"></span>
+<span id="stars">⭐ 0</span>
+</div>
+
+<h2>Jednotné a množné číslo</h2>
+
+<div class="pics">
+<div class="pic">
+<div id="onePic" class="emoji"></div>
+<div id="oneWord" class="word"></div>
+</div>
+
+<div class="pic">
+<div id="manyPic" class="emoji"></div>
+<div id="manyWord" class="word"></div>
+</div>
+</div>
+
+<button class="green" onclick="hear()">🔊 Vypočuť</button>
+<button class="red" onclick="listen()">🎤 Povedať</button>
+
+<div id="msg">Stlač 🔊 a potom 🎤</div>
+</div>
+</div>
+
+<div id="end" class="page">
+<div class="card">
+<div style="font-size:80px">🏆🌟</div>
+<h1>Výborne!</h1>
+<h2 id="result"></h2>
+<button onclick="start()">🔁 Hrať znova</button>
+</div>
+</div>
+
+<script>
+const tasks=[
+["vták","vtáky","🐦",3],
+["loď","lode","⛵",2],
+["lopta","lopty","⚽",3],
+["pes","psy","🐶",3],
+["mačka","mačky","🐱",3]
+];
+
+let n=0;
+let score=0;
+
+function page(x){
+document.querySelectorAll(".page").forEach(a=>a.classList.remove("show"));
+document.getElementById(x).classList.add("show");
 }
 
-h1{
- font-size:42px;
- color:#7657e8;
+function start(){
+n=0;
+score=0;
+page("game");
+draw();
 }
 
-.hero{
- font-size:55px;
- margin:15px;
+function draw(){
+let t=tasks[n];
+
+document.getElementById("number").innerText=
+"Úloha "+(n+1)+" z "+tasks.length;
+
+document.getElementById("stars").innerText="⭐ "+score;
+
+document.getElementById("onePic").innerText=t[2];
+
+document.getElementById("manyPic").innerText=
+t[2].repeat(t[3]);
+
+document.getElementById("oneWord").innerText=
+"1 "+t[0];
+
+document.getElementById("manyWord").innerText=
+t[3]+" "+t[1];
+
+document.getElementById("msg").innerText=
+"Stlač 🔊 a potom 🎤";
 }
 
-button{
- border:0;
- border-radius:18px;
- padding:15px 20px;
- margin:7px;
- font-size:19px;
- font-weight:bold;
- color:white;
- background:#7657e8;
+function say(x){
+speechSynthesis.cancel();
+let s=new SpeechSynthesisUtterance(x);
+s.lang="sk-SK";
+s.rate=.8;
+speechSynthesis.speak(s);
 }
 
-.sound{background:#19aa9a}
-.mic{background:#ff6078}
+function hear(){
+let t=tasks[n];
+say("Jeden "+t[0]+". Viac "+t[1]+". Povedz "+t[0]+", "+t[1]);
+}
 
-.pictures{
- display:grid;
- grid-template-columns:1fr 
+function clean(x){
+return x.toLowerCase()
+.replace(/[.,!?]/g," ")
+.replace(/\s+/g," ")
+.trim();
+}
+
+function listen(){
+
+let SR=
+window.SpeechRecognition||
+window.webkitSpeechRecognition;
+
+if(!SR){
+document.getElementById("msg").innerText=
+"🎤 Rozpoznávanie reči nie je dostupné.";
+return;
+}
+
+let r=new SR();
+r.lang="sk-SK";
+r.maxAlternatives=3;
+
+document.getElementById("msg").innerText=
+"🎤 Počúvam...";
+
+r.onresult=function(e){
+
+let t=tasks[n];
+let heard=clean(e.results[0][0].transcript);
+let one=clean(t[0]);
+let many=clean(t[1]);
+
+if(heard.includes(one)&&heard.includes(many)){
+
+score++;
+
+document.getElementById("msg").innerText=
+"🌟 Výborne! Správne!";
+
+say("Výborne");
+
+setTimeout(next,1500);
+
+}else{
+
+document.getElementById("msg").innerText=
+"🙂 Skús ešte raz";
+
+say("Skús ešte raz");
+
+}
+};
+
+r.onerror=function(){
+document.getElementById("msg").innerText=
+"🎤 Skús mikrofón ešte raz.";
+};
+
+r.start();
+}
+
+function next(){
+
+n++;
+
+if(n<tasks.length){
+draw();
+}else{
+document.getElementById("result").innerText=
+"Získal si "+score+" z "+tasks.length+" hviezdičiek ⭐";
+page("end");
+}
+
+}
+</script>
+
+</body>
+</html>
